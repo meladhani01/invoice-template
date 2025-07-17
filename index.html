@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>قالب عرض سعر</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        @media print {
+            .no-print { display: none; }
+        }
+        .table-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            text-align: center;
+        }
+        .table-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        /* Minimalist styling for Electron app */
+        body { background-color: #f9fafb; padding: 2rem; }
+        .container { max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-10; }
+        table { width: 100%; text-align: right; }
+        thead { background-color: #f3f4f6; }
+        th, td { padding: 0.75rem; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="flex justify-between items-start border-b pb-6 mb-8">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">عرض سعر</h1>
+                <p class="text-gray-500 mt-1">رقم العرض: <span contenteditable="true" class="p-1 rounded hover:bg-gray-100">001</span></p>
+            </div>
+            <div class="text-right">
+                <div contenteditable="true" class="p-2 rounded hover:bg-gray-100">
+                    <h2 class="text-xl font-bold text-gray-700">شركة البطل</h2>
+                    <p class="text-sm text-gray-600">مسؤول : م/ عماد عادل</p>
+                </div>
+            </div>
+        </header>
+        <section class="flex justify-between mb-8">
+            <div>
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">مقدم إلى:</h3>
+                <div contenteditable="true" class="p-2 rounded hover:bg-gray-100">
+                    <p class="text-gray-800">اسم العميل</p>
+                    <p class="text-gray-600">عنوان العميل</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <h3 class="text-lg font-semibold text-gray-700 mb-2">التاريخ:</h3>
+                <p class="text-gray-800" id="current-date"></p>
+            </div>
+        </section>
+        <section>
+            <table>
+                <thead>
+                    <tr>
+                        <th>اسم الصنف</th>
+                        <th class="w-24">الكمية</th>
+                        <th class="w-32">السعر</th>
+                        <th class="w-32">الإجمالي</th>
+                        <th class="w-12 no-print"></th>
+                    </tr>
+                </thead>
+                <tbody id="items-table-body"></tbody>
+            </table>
+            <button id="add-item-btn" class="no-print mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+                + إضافة صنف
+            </button>
+        </section>
+        <section class="mt-10 flex justify-end">
+            <div class="w-1/2">
+                <div class="flex justify-between py-2 border-b">
+                    <span>المجموع الفرعي:</span>
+                    <span id="subtotal">0.00</span>
+                </div>
+                <div class="flex justify-between py-2 border-b">
+                    <span><span contenteditable="true">مصاريف النقل</span>:</span>
+                    <input type="number" id="shipping" value="0" class="table-input w-24" />
+                </div>
+                <div class="flex justify-between py-3 bg-gray-100 rounded-lg px-4 mt-4">
+                    <span class="text-xl font-bold">الإجمالي الكلي:</span>
+                    <span id="total" class="text-xl font-bold">0.00</span>
+                </div>
+            </div>
+        </section>
+        <footer class="mt-12 pt-6 border-t">
+            <h4 class="font-semibold mb-2">ملاحظات:</h4>
+            <div contenteditable="true" class="text-gray-600 p-2 rounded hover:bg-gray-100">
+                <p>- السعر يشمل ضريبة القيمة المضافة.</p>
+                <p>- يتم التوريد في خلال 3 أيام بعد استلام قيمة المبلغ كاش.</p>
+            </div>
+            <p class="text-center text-gray-500 mt-8">وتفضلوا بقبول فائق الاحترام</p>
+        </footer>
+        <div class="text-center mt-8 no-print">
+            <button onclick="window.print()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded">
+                طباعة / حفظ PDF
+            </button>
+        </div>
+    </div>
+    <script>
+        document.getElementById('current-date').textContent = new Date().toLocaleDateString('ar-EG');
+        const itemsTableBody = document.getElementById('items-table-body');
+        const addItemBtn = document.getElementById('add-item-btn');
+        const subtotalEl = document.getElementById('subtotal');
+        const shippingEl = document.getElementById('shipping');
+        const totalEl = document.getElementById('total');
+        function createItemRow(name = '', quantity = 1, price = 0) {
+            const row = document.createElement('tr');
+            row.className = 'border-b';
+            row.innerHTML = `
+                <td><input type="text" value="${name}" class="table-input text-right" placeholder="وصف الصنف"></td>
+                <td><input type="number" value="${quantity}" min="0" step="0.01" class="table-input quantity"></td>
+                <td><input type="number" value="${price}" min="0" step="0.01" class="table-input price"></td>
+                <td class="text-center font-semibold item-total">0.00</td>
+                <td class="text-center no-print">
+                    <button class="text-red-500 hover:text-red-700 remove-item-btn">&times;</button>
+                </td>
+            `;
+            itemsTableBody.appendChild(row);
+            updateTotals();
+        }
+        function updateTotals() {
+            let subtotal = 0;
+            itemsTableBody.querySelectorAll('tr').forEach(row => {
+                const quantity = parseFloat(row.querySelector('.quantity').value) || 0;
+                const price = parseFloat(row.querySelector('.price').value) || 0;
+                const itemTotal = quantity * price;
+                row.querySelector('.item-total').textContent = itemTotal.toFixed(2);
+                subtotal += itemTotal;
+            });
+            const shipping = parseFloat(shippingEl.value) || 0;
+            const total = subtotal + shipping;
+            subtotalEl.textContent = subtotal.toFixed(2);
+            totalEl.textContent = total.toFixed(2);
+        }
+        addItemBtn.addEventListener('click', () => createItemRow());
+        itemsTableBody.addEventListener('click', (e) => {
+            if (e.target.classList.contains('remove-item-btn')) {
+                e.target.closest('tr').remove();
+                updateTotals();
+            }
+        });
+        itemsTableBody.addEventListener('input', (e) => {
+            if (e.target.classList.contains('quantity') || e.target.classList.contains('price')) {
+                updateTotals();
+            }
+        });
+        shippingEl.addEventListener('input', updateTotals);
+        createItemRow('كليوباترا نيو سكاس بيج مط فرز اول 121x60,5', 13.76, 532);
+        createItemRow('جوهره ارورا ايفوري مط فرز اول 60x120', 56.16, 630);
+        createItemRow('سكريت جراي ستريب لاستر فرز اول 30x90', 60.75, 574.94);
+        shippingEl.value = 7000;
+        updateTotals();
+    </script>
+</body>
+</html>
